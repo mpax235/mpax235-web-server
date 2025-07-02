@@ -1,0 +1,8 @@
+###########################################
+# The mpax235 Web Server Configuration
+# Licensed under the MIT License
+# 2024-2025 mpax235
+###########################################
+
+# This one configures if your machine should host to your entire Wi-Fi or it should only be accessible to your machine.
+nonLocal = false
