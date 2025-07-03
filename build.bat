@@ -33,7 +33,7 @@ if "%1"=="clean" goto clean
 
 echo Building...
 mkdir build
-cl src/mpax235.cpp src/error_pages.cpp
+cl src/mpax235.cpp src/http_response.cpp
 move /y *.obj build\
 color 7
 goto :eof

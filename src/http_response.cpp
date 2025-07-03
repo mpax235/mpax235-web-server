@@ -22,11 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "error_pages.h"
-#include "errors.h"
+#include "http_response.h"
+#include "http_codes.h"
 #include <string>
 #include <iostream>
 #pragma comment(lib, "Ws2_32.lib")
+
+static char mpax235_301_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>301 Moved Permanently</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/errorpage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>301 Moved Permanently</h1><center>\n";
 
 static char mpax235_400_page[] =
 "<!DOCTYPE html>\n"
@@ -63,35 +73,39 @@ static char footer[] =
 "    </body>\n"
 "</html>\n";
 
-void send_error_page(SOCKET clientSocket, int errorCode) {
-    const char* errorBody = nullptr;
+void send_response_page(SOCKET clientSocket, int httpCode) {
+    const char* responseBody = nullptr;
     const char* status = nullptr;
 
-    switch (errorCode) {
+    switch (httpCode) {
+        case 301:
+            responseBody = mpax235_301_page;
+            status = MPAX235_301;
+            break;
         case 400:
-            errorBody = mpax235_400_page;
+            responseBody = mpax235_400_page;
             status = MPAX235_400;
             break;
         case 404:
-            errorBody = mpax235_404_page;
+            responseBody = mpax235_404_page;
             status = MPAX235_404;
             break;
         case 500:
-            errorBody = mpax235_500_page;
+            responseBody = mpax235_500_page;
             status = MPAX235_500;
             break;
         default:
-            errorBody = mpax235_500_page;
+            responseBody = mpax235_500_page;
             status = MPAX235_500;
             break;
     }
 
-    std::string fullBody = std::string(errorBody) + footer;
+    std::string fullBody = std::string(responseBody) + footer;
     std::string response =
         "HTTP/1.1 " + std::string(status) + "\r\n" +
         "Server: mpax235\r\n" +
         "Content-Type: text/html\r\n" +
-        "Content-Length: " + std::to_string(strlen(errorBody) + strlen(footer)) + "\r\n" +
+        "Content-Length: " + std::to_string(strlen(responseBody) + strlen(footer)) + "\r\n" +
         "Connection: close\r\n\r\n" +
         fullBody;
 

@@ -30,7 +30,7 @@ SOFTWARE.
 #include <thread>
 #include <sys/stat.h>
 
-#include "error_pages.h"
+#include "http_response.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -155,12 +155,12 @@ void handleClient(SOCKET clientSocket) {
     if (methodEnd != std::string::npos) {
         method = request.substr(0, methodEnd);
     } else {
-        send_error_page(clientSocket, 400);
+        send_response_page(clientSocket, 400);
         return;
     }
 
     if (method != "GET" && method != "HEAD") {
-        send_error_page(clientSocket, 400);
+        send_response_page(clientSocket, 400);
         return;
     }
 
@@ -174,23 +174,28 @@ void handleClient(SOCKET clientSocket) {
         std::string req_path = request.substr(start + 1, end - start - 1);
         std::cout << "New Request: " << req_path << "\n";
 
+        if (req_path.find("%") != std::string::npos || req_path.find("..") != std::string::npos) {
+            send_response_page(clientSocket, 400);
+            return;
+        }
+
         if (req_path == "/") {
             path = base_dir + "index.html";
         } else if (req_path.find("..") == std::string::npos) {
             path = base_dir + req_path.substr(1);
         } else {
-            send_error_page(clientSocket, 400);
+            send_response_page(clientSocket, 400);
             return;
         }
     } else {
-        send_error_page(clientSocket, 400);
+        send_response_page(clientSocket, 400);
         return;
     }
 
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) {
         std::cout << "404 Not Found: " << path << "\n";
-        send_error_page(clientSocket, 404);
+        send_response_page(clientSocket, 404);
         return;
     }
 

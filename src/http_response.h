@@ -22,6 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#define MPAX235_400         "400 Bad Request"
-#define MPAX235_404         "404 Not Found"
-#define MPAX235_500         "500 Internal Server Error"
+#include <WinSock2.h>
+
+#ifndef HTTP_RESPONSE_H
+#define HTTP_RESPONSE_H
+
+void send_response_page(SOCKET clientSocket, int errorCode);
+
+#endif // HTTP_RESPONSE_H
