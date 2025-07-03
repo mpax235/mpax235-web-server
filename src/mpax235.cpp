@@ -229,7 +229,10 @@ void handleClient(SOCKET clientSocket) {
     closesocket(clientSocket);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    int port = (argc > 1) ? std::atoi(argv[1]) : 8080;
+    if (port > 9999 || port < 2) port = 8080;
+    
     struct stat info;
     if (stat("host_files/mpax235WebServerCSS", &info) == 0 && (info.st_mode & S_IFDIR)) {
         // do nothing
@@ -268,7 +271,7 @@ int main() {
     }
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080);
+    serverAddr.sin_port = htons(port);
 
     if (nonLocal) {
         char hostname[256];
@@ -292,12 +295,12 @@ int main() {
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &serverAddr.sin_addr, ipStr, sizeof(ipStr));
-        std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":8080\n";
+        std::cout << "The mpax235 Web Server is running at http://" << ipStr << port;
 
         freeaddrinfo(info);
     } else {
         inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-        std::cout << "The mpax235 Web Server is running at http://localhost:8080\n";
+        std::cout << "The mpax235 Web Server is running at http://localhost:" << port << "\n";
     }
 
     if (bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
