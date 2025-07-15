@@ -33,7 +33,7 @@ if "%1"=="clean" goto clean
 
 echo Building...
 mkdir build
-cl src/mpax235.cpp src/http_response.cpp
+cl src/*.cpp src/http/*.cpp
 move /y *.obj build\
 color 7
 goto :eof
@@ -42,5 +42,5 @@ goto :eof
 echo Clean...
 rmdir /s /q build
 del mpax235.exe
-del thempax235webserver.zip
+if exist thempax235webserver.zip del thempax235webserver.zip
 color 7

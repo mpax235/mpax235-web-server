@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "http_response.h"
-#include "http_codes.h"
+#include "include/http_response.h"
+#include "include/http_codes.h"
 #include <string>
 #include <iostream>
 #pragma comment(lib, "Ws2_32.lib")
@@ -33,40 +33,90 @@ static char mpax235_301_page[] =
 "<html>\n"
 "    <head>\n"
 "        <title>301 Moved Permanently</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/errorpage.css\">\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
 "    </head>\n"
 "    <body>\n"
 "        <center><h1>301 Moved Permanently</h1><center>\n";
+
+static char mpax235_302_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>302 Found</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>302 Found</h1><center>\n";
+
+static char mpax235_303_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>303 See Other</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>303 See Other</h1><center>\n";
 
 static char mpax235_400_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
 "        <title>400 Bad Request</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/errorpage.css\">\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
 "    </head>\n"
 "    <body>\n"
 "        <center><h1>400 Bad Request</h1><center>\n";
+
+static char mpax235_403_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>403 Forbidden</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>403 Forbidden</h1><center>\n";
 
 static char mpax235_404_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
 "        <title>404 Not Found</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/errorpage.css\">\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
 "    </head>\n"
 "    <body>\n"
 "        <center><h1>404 Not Found</h1><center>\n";
+
+static char mpax235_429_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>429 Too Many Requests</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>429 Too Many Requests</h1><center>\n";
 
 static char mpax235_500_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
 "        <title>500 Internal Server Error</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/errorpage.css\">\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
 "    </head>\n"
 "    <body>\n"
 "        <center><h1>500 Internal Server Error</h1><center>\n";
+
+static char mpax235_502_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>502 Bad Gateway</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>502 Bad Gateway</h1><center>\n";
 
 static char footer[] =
 "        <hr><center><span>mpax235</span></center>\n"
@@ -82,17 +132,37 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             responseBody = mpax235_301_page;
             status = MPAX235_301;
             break;
+        case 302:
+            responseBody = mpax235_302_page;
+            status = MPAX235_302;
+            break;
+        case 303:
+            responseBody = mpax235_303_page;
+            status = MPAX235_303;
+            break;
         case 400:
             responseBody = mpax235_400_page;
             status = MPAX235_400;
+            break;
+        case 403:
+            responseBody = mpax235_403_page;
+            status = MPAX235_403;
             break;
         case 404:
             responseBody = mpax235_404_page;
             status = MPAX235_404;
             break;
+        case 429:
+            responseBody = mpax235_429_page;
+            status = MPAX235_429;
+            break;
         case 500:
             responseBody = mpax235_500_page;
             status = MPAX235_500;
+            break;
+        case 502:
+            responseBody = mpax235_502_page;
+            status = MPAX235_502;
             break;
         default:
             responseBody = mpax235_500_page;

@@ -30,7 +30,7 @@ SOFTWARE.
 #include <thread>
 #include <sys/stat.h>
 
-#include "http_response.h"
+#include "http/include/http_response.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &serverAddr.sin_addr, ipStr, sizeof(ipStr));
-        std::cout << "The mpax235 Web Server is running at http://" << ipStr << port;
+        std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":" << port << "\n";
 
         freeaddrinfo(info);
     } else {
