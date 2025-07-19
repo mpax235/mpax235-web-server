@@ -24,108 +24,41 @@ SOFTWARE.
 
 #include "include/http_response.h"
 #include "include/http_codes.h"
+#include "include/http_response_elements.h"
 #include <string>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #pragma comment(lib, "Ws2_32.lib")
-
-static char mpax235_301_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>301 Moved Permanently</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>301 Moved Permanently</h1><center>\n";
-
-static char mpax235_302_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>302 Found</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>302 Found</h1><center>\n";
-
-static char mpax235_303_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>303 See Other</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>303 See Other</h1><center>\n";
-
-static char mpax235_400_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>400 Bad Request</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>400 Bad Request</h1><center>\n";
-
-static char mpax235_403_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>403 Forbidden</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>403 Forbidden</h1><center>\n";
-
-static char mpax235_404_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>404 Not Found</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>404 Not Found</h1><center>\n";
-
-static char mpax235_429_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>429 Too Many Requests</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>429 Too Many Requests</h1><center>\n";
-
-static char mpax235_500_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>500 Internal Server Error</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>500 Internal Server Error</h1><center>\n";
-
-static char mpax235_502_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>502 Bad Gateway</title>\n"
-"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>502 Bad Gateway</h1><center>\n";
-
-static char footer[] =
-"        <hr><center><span>mpax235</span></center>\n"
-"    </body>\n"
-"</html>\n";
 
 void send_response_page(SOCKET clientSocket, int httpCode) {
     const char* responseBody = nullptr;
     const char* status = nullptr;
+    bool footerEnabled = true;
+
+    std::string stringFor404Path;
+    std::string error404PagePath = "default";
+
+    std::ifstream config("config.txt");
+    if (config) {
+        std::string line;
+        while (std::getline(config, line)) {
+            size_t pos = line.find("error404PagePath =");
+            if (pos != std::string::npos) {
+                std::string value = line.substr(pos + 18);
+                value.erase(0, value.find_first_not_of(" \t"));
+                value.erase(value.find_last_not_of(" \t") + 1);
+
+                if (value != "default") {
+                    error404PagePath = value;
+                } else {
+                    // do nothing
+                }
+                break;
+            }
+        }
+        config.close();
+    }
 
     switch (httpCode) {
         case 301:
@@ -149,7 +82,25 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             status = MPAX235_403;
             break;
         case 404:
-            responseBody = mpax235_404_page;
+            if (error404PagePath != "default") {
+                std::string hostFiles = "host_files/";
+                error404PagePath = hostFiles + error404PagePath;
+                std::ifstream custom404(error404PagePath);
+                if (custom404) {
+                    std::stringstream buffer;
+                    buffer << custom404.rdbuf();
+                    stringFor404Path = buffer.str();
+                    responseBody = stringFor404Path.c_str();
+                    footerEnabled = false;
+                    custom404.close();
+                } else {
+                    std::cerr << "The custom 404 page cannot be found :( | " << error404PagePath << " | Using fallback page." << "\n";
+                    responseBody = mpax235_404_page;
+                }
+            } else {
+                responseBody = mpax235_404_page;
+            }
+
             status = MPAX235_404;
             break;
         case 429:
@@ -170,12 +121,16 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             break;
     }
 
-    std::string fullBody = std::string(responseBody) + footer;
+    std::string fullBody = std::string(responseBody);
+    if (footerEnabled) {
+        fullBody += footer;
+    }
+
     std::string response =
         "HTTP/1.1 " + std::string(status) + "\r\n" +
         "Server: mpax235\r\n" +
         "Content-Type: text/html\r\n" +
-        "Content-Length: " + std::to_string(strlen(responseBody) + strlen(footer)) + "\r\n" +
+        "Content-Length: " + std::to_string(fullBody.length()) + "\r\n" +
         "Connection: close\r\n\r\n" +
         fullBody;
 

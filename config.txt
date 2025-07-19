@@ -4,5 +4,22 @@
 # 2024-2025 mpax235
 ###########################################
 
+#####################################
+#
+# NETWORK STUFF
+#
+#####################################
+
 # This one configures if your machine should host to your entire Wi-Fi or it should only be accessible to your machine.
+# "false" will only broadcast the server on localhost:<Port> while "true" will broadcast the server on <iPv4 Address>:<Port>.
 nonLocal = false
+
+#####################################
+#
+# WEBSITE STUFF
+#
+#####################################
+
+# This one configures whatever it should show the custom 404 page or the default 404 page.
+# "default" will use the default 404 page while setting it to not "default" will attempt to grab the custom 404 page (like "404.html").
+error404PagePath = default

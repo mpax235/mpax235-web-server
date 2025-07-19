@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef HTTPCODES_H
-#define HTTPCODES_H
+#ifndef HTTP_CODES_H
+#define HTTP_CODES_H
 
 #define MPAX235_200         "200 Found"
 
@@ -64,4 +64,4 @@ SOFTWARE.
 #define MPAX235_505         "505 HTTP Version Not Supported"
 #define MPAX235_507         "507 Insufficient Storage"
 
-#endif // HTTPCODES_H
+#endif // HTTP_CODES_H
