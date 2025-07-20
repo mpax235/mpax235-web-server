@@ -73,9 +73,25 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             responseBody = mpax235_303_page;
             status = MPAX235_303;
             break;
+        case 307:
+            responseBody = mpax235_307_page;
+            status = MPAX235_307;
+            break;
+        case 308:
+            responseBody = mpax235_308_page;
+            status = MPAX235_308;
+            break;
         case 400:
             responseBody = mpax235_400_page;
             status = MPAX235_400;
+            break;
+        case 401:
+            responseBody = mpax235_401_page;
+            status = mpax235_401_page;
+            break;
+        case 402:
+            responseBody = mpax235_402_page;
+            status = MPAX235_402;
             break;
         case 403:
             responseBody = mpax235_403_page;
@@ -103,6 +119,14 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
 
             status = MPAX235_404;
             break;
+        case 405:
+            responseBody = mpax235_405_page;
+            status = MPAX235_405;
+            break;
+        case 406:
+            responseBody = mpax235_406_page;
+            status = MPAX235_406;
+            break;
         case 429:
             responseBody = mpax235_429_page;
             status = MPAX235_429;
@@ -126,13 +150,18 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
         fullBody += footer;
     }
 
+    std::string paddingComments;
+    for (int i = 0; i < 16; ++i) {
+        paddingComments += padding;
+    }
+
     std::string response =
         "HTTP/1.1 " + std::string(status) + "\r\n" +
         "Server: mpax235\r\n" +
         "Content-Type: text/html\r\n" +
-        "Content-Length: " + std::to_string(fullBody.length()) + "\r\n" +
+        "Content-Length: " + std::to_string(fullBody.length() + paddingComments.length()) + "\r\n" +
         "Connection: close\r\n\r\n" +
-        fullBody;
+        fullBody + paddingComments;
 
     const char* data = response.c_str();
     int totalSent = 0;
