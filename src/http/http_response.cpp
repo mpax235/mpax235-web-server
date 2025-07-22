@@ -127,17 +127,97 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             responseBody = mpax235_406_page;
             status = MPAX235_406;
             break;
+        case 408:
+            responseBody = mpax235_408_page;
+            status = MPAX235_408;
+            break;
+        case 409:
+            responseBody = mpax235_409_page;
+            status = MPAX235_409;
+            break;
+        case 410:
+            responseBody = mpax235_410_page;
+            status = MPAX235_410;
+            break;
+        case 411:
+            responseBody = mpax235_411_page;
+            status = MPAX235_411;
+            break;
+        case 412:
+            responseBody = mpax235_412_page;
+            status = MPAX235_412;
+            break;
+        case 413:
+            responseBody = mpax235_413_page;
+            status = MPAX235_413;
+            break;
+        case 414:
+            responseBody = mpax235_414_page;
+            status = MPAX235_414;
+            break;
+        case 415:
+            responseBody = mpax235_415_page;
+            status = MPAX235_415;
+            break;
+        case 416:
+            responseBody = mpax235_416_page;
+            status = MPAX235_416;
+            break;
+        case 421:
+            responseBody = mpax235_421_page;
+            status = MPAX235_421;
+            break;
         case 429:
             responseBody = mpax235_429_page;
             status = MPAX235_429;
+            break;
+        case 494:
+            responseBody = mpax235_494_page;
+            status = MPAX235_494;
+            break;
+        case 495:
+            responseBody = mpax235_495_page;
+            status = MPAX235_495;
+            break;
+        case 496:
+            responseBody = mpax235_496_page;
+            status = MPAX235_496;
+            break;
+        case 497:
+            responseBody = mpax235_497_page;
+            status = MPAX235_497;
+            break;
+        case 498:
+            responseBody = mpax235_498_page;
+            status = MPAX235_498;
             break;
         case 500:
             responseBody = mpax235_500_page;
             status = MPAX235_500;
             break;
+        case 501:
+            responseBody = mpax235_501_page;
+            status = MPAX235_501;
+            break;
         case 502:
             responseBody = mpax235_502_page;
             status = MPAX235_502;
+            break;
+        case 503:
+            responseBody = mpax235_503_page;
+            status = MPAX235_503;
+            break;
+        case 504:
+            responseBody = mpax235_504_page;
+            status = MPAX235_504;
+            break;
+        case 505:
+            responseBody = mpax235_505_page;
+            status = MPAX235_505;
+            break;
+        case 507:
+            responseBody = mpax235_507_page;
+            status = MPAX235_507;
             break;
         default:
             responseBody = mpax235_500_page;

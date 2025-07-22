@@ -299,6 +299,17 @@ static char mpax235_497_page[] =
 "        <center><h1>400 Bad Request</h1><center>\n"
 "        <center>The plain HTTP request was sent to HTTPS port</center>\n";
 
+static char mpax235_498_page[] =
+"<!DOCTYPE html>\n"
+"<html>\n"
+"    <head>\n"
+"        <title>406 Path Traversal attack blocked</title>\n"
+"        <link rel=\"stylesheet\" href=\"/mpax235WebServerCSS/serverCSS/httpresponsepage.css\">\n"
+"    </head>\n"
+"    <body>\n"
+"        <center><h1>406 Not Acceptable</h1><center>"
+"        <center>Path Traversal attack blocked</center>\n";
+
 static char mpax235_500_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"

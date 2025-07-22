@@ -172,10 +172,35 @@ void handleClient(SOCKET clientSocket) {
 
     if (start != std::string::npos && end != std::string::npos) {
         std::string req_path = request.substr(start + 1, end - start - 1);
-        std::cout << "New Request: " << req_path << "\n";
+        std::cout << "[200] OK: " << req_path << "\n";
 
-        if (req_path.find("%") != std::string::npos || req_path.find("..") != std::string::npos) {
+        if (req_path.find("%") != std::string::npos) {
+            std::cout << "[400] Bad Request: " << req_path << "\n";
             send_response_page(clientSocket, 400);
+            return;
+        }
+
+        if (req_path.find("..") != std::string::npos) {
+            sockaddr_storage clientAddr;
+            int addrLen = sizeof(clientAddr);
+            char ipStr[INET6_ADDRSTRLEN] = {0};
+
+            if (getpeername(clientSocket, (sockaddr*)&clientAddr, &addrLen) == 0) {
+                void* addrPtr = nullptr;
+
+                if (clientAddr.ss_family == AF_INET) {
+                    addrPtr = &((sockaddr_in*)&clientAddr)->sin_addr;
+                } else if (clientAddr.ss_family == AF_INET6) {
+                    addrPtr = &((sockaddr_in6*)&clientAddr)->sin6_addr;
+                }
+                
+                if (addrPtr && inet_ntop(clientAddr.ss_family, addrPtr, ipStr, sizeof(ipStr))) {
+                    std::cout << "[498] Path Traversal attack blocked: IP " << ipStr << " tried to do " << req_path << "\n";
+                }
+            } else {
+                std::cout << "[498] Path Traversal attack blocked: " << req_path << "\n";
+            }
+            send_response_page(clientSocket, 498);
             return;
         }
 
@@ -194,7 +219,7 @@ void handleClient(SOCKET clientSocket) {
 
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "404 Not Found: " << path << "\n";
+        std::cout << "[404] Not Found: " << path << "\n";
         send_response_page(clientSocket, 404);
         return;
     }

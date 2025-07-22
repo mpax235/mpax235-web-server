@@ -55,6 +55,7 @@ SOFTWARE.
 #define MPAX235_495         "400 Bad Request"
 #define MPAX235_496         "400 Bad Request"
 #define MPAX235_497         "400 Bad Request"
+#define MPAX235_498         "406 Not Acceptable"
 
 #define MPAX235_500         "500 Internal Server Error"
 #define MPAX235_501         "501 Not Implemented"
