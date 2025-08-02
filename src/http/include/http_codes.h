@@ -25,14 +25,21 @@ SOFTWARE.
 #ifndef HTTP_CODES_H
 #define HTTP_CODES_H
 
-#define MPAX235_200         "200 Found"
+/* Success Codes */
+#define MPAX235_200         "200 OK"
+#define MPAX235_201         "201 Created"
+#define MPAX235_202         "202 Accepted"
+#define MPAX235_204         "204 No Content"
+#define MPAX235_206         "206 Partial Content"
 
+/* Redirect Codes */
 #define MPAX235_301         "301 Moved Permanently"
 #define MPAX235_302         "302 Found"
 #define MPAX235_303         "303 See Other"
 #define MPAX235_307         "307 Temporary Redirect"
 #define MPAX235_308         "308 Permanent Redirect"
 
+/* Client Error Codes */
 #define MPAX235_400         "400 Bad Request"
 #define MPAX235_401         "401 Authorization Required"
 #define MPAX235_402         "402 Payment Required"
@@ -57,6 +64,7 @@ SOFTWARE.
 #define MPAX235_497         "400 Bad Request"
 #define MPAX235_498         "406 Not Acceptable"
 
+/* Server Error Codes */
 #define MPAX235_500         "500 Internal Server Error"
 #define MPAX235_501         "501 Not Implemented"
 #define MPAX235_502         "502 Bad Gateway"
