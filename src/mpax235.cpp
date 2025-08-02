@@ -258,6 +258,7 @@ int main(int argc, char *argv[]) {
     int port = (argc > 1) ? std::atoi(argv[1]) : 8080;
     if (port > 9999 || port < 2) port = 8080;
     
+    /* unused since build 14
     struct stat info;
     if (stat("host_files/mpax235WebServerCSS", &info) == 0 && (info.st_mode & S_IFDIR)) {
         // do nothing
@@ -265,6 +266,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "[WEB SERVER ERROR]: The mpax235WebServerCSS directory does not exist in the host_files directory. Please put back the directory into the host_files directory.";
         return -1;
     }
+    */
 
     WSADATA wsaData;
     SOCKET serverSocket;
