@@ -16,6 +16,17 @@ nonLocal = false
 
 #####################################
 #
+# SERVER STUFF
+#
+#####################################
+
+# This one configures if the mpax235 Web Server version tag should appear on the HTTP error pages.
+# "false" will only show "mpax235" while true will show "mpax235 / <version>".
+# It is recommended to set this to false for production use.
+showVersionTag = true
+
+#####################################
+#
 # WEBSITE STUFF
 #
 #####################################

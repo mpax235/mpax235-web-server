@@ -25,7 +25,6 @@ SOFTWARE.
 #include "include/http_response.h"
 #include "include/http_codes.h"
 #include "include/http_response_elements.h"
-#include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -35,6 +34,7 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
     const char* responseBody = nullptr;
     const char* status = nullptr;
     bool footerEnabled = true;
+    bool showVersionTag = false;
 
     std::string stringFor404Path;
     std::string error404PagePath = "default";
@@ -54,7 +54,10 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
                 } else {
                     // do nothing
                 }
-                break;
+            }
+
+            if (line.find("showVersionTag = true") != std::string::npos) {
+                showVersionTag = true;
             }
         }
         config.close();
@@ -227,7 +230,11 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
 
     std::string fullBody = std::string(responseBody);
     if (footerEnabled) {
-        fullBody += footer;
+        if (showVersionTag == true) {
+            fullBody += footer;
+        } else {
+            fullBody += footerNoVersionTag;
+        }
     }
 
     std::string paddingComments;

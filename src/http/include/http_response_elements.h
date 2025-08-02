@@ -22,6 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "../../info/include/defines.h"
+#include "../../info/include/server_info.h"
+
 #ifndef HTTP_RESPONSE_ELEMENTS_H
 #define HTTP_RESPONSE_ELEMENTS_H
 
@@ -380,7 +383,19 @@ static char mpax235_507_page[] =
 "    <body>\n"
 "        <center><h1>507 Insufficient Storage</h1><center>\n";
 
-static char footer[] =
+#ifdef BUILD
+std::string footer = 
+    "        <hr><center><span>mpax235/build " + std::to_string(buildVersion) + "</span></center>\n"
+    "    </body>\n"
+    "</html>\n";
+#else
+std::string footer = 
+    "        <hr><center><span>mpax235/" + releaseVersion + "</span></center>\n"
+    "    </body>\n"
+    "</html>\n";
+#endif
+
+static char footerNoVersionTag[] =
 "        <hr><center><span>mpax235</span></center>\n"
 "    </body>\n"
 "</html>\n";

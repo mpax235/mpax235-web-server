@@ -279,7 +279,6 @@ int main(int argc, char *argv[]) {
         while (std::getline(config, line)) {
             if (line.find("nonLocal = true") != std::string::npos) {
                 nonLocal = true;
-                break;
             }
         }
         config.close();

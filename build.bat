@@ -32,7 +32,7 @@ echo.
 if "%1"=="clean" goto clean
 
 echo Building...
-mkdir build
+if not exist build mkdir build
 cl src/*.cpp src/http/*.cpp
 move /y *.obj build\
 color 7
