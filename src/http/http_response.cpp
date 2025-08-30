@@ -38,6 +38,7 @@ void send_response_page(mpax_socket clientSocket, int httpCode) {
 
     std::string stringFor404Path;
     std::string error404PagePath = "default";
+    std::string serverHeader;
 
     std::ifstream config("config.txt");
     if (config) {
@@ -61,6 +62,24 @@ void send_response_page(mpax_socket clientSocket, int httpCode) {
             }
         }
         config.close();
+    }
+
+    if (showVersionTag) {
+        #ifdef BUILD
+        #ifdef _WIN32
+        serverHeader = "mpax235 WS/build " + std::to_string(buildVersion) + " (Windows)";
+        #else
+        serverHeader = "mpax235 WS/" + std::to_string(buildVersion) + " (Linux)";
+        #endif
+        #else
+        #ifdef _WIN32
+        serverHeader = "mpax235 WS/" + releaseVersion + " (Windows)";
+        #else
+        serverHeader = "mpax235 WS/" + releaseVersion + " (Linux)";
+        #endif
+        #endif
+    } else {
+        serverHeader = "mpax235 WS";
     }
 
     switch (httpCode) {
@@ -227,7 +246,7 @@ void send_response_page(mpax_socket clientSocket, int httpCode) {
 
     std::string response =
         "HTTP/1.1 " + std::string(status) + "\r\n" +
-        "Server: mpax235 WS\r\n" +
+        "Server: " + serverHeader + "\r\n" +
         "Content-Type: text/html\r\n" +
         "Content-Length: " + std::to_string(fullBody.length() + paddingComments.length()) + "\r\n" +
         "Connection: close\r\n\r\n" +
