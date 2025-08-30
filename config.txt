@@ -12,7 +12,7 @@
 
 # This one configures if your machine should host to your entire Wi-Fi or it should only be accessible to your machine.
 # "false" will only broadcast the server on localhost:<Port> while "true" will broadcast the server on <iPv4 / iPv6 Address>:<Port>.
-nonLocal = true
+nonLocal = false
 
 #####################################
 #
