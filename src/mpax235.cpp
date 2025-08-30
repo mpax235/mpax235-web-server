@@ -22,33 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
-#else
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <errno.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#endif
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <thread>
 #include <sys/stat.h>
+#include <cctype>
 
+#include "socket/include/mpax_socket.h"
 #include "http/include/http_response.h"
-
-#ifdef _WIN32
-#pragma comment(lib, "Ws2_32.lib")
-#endif
+#include "info/include/defines.h"
+#include "info/include/server_info.h"
 
 bool endsWith(const std::string& str, const std::string& suffix) {
     return str.size() >= suffix.size() &&
@@ -153,19 +137,56 @@ std::string getMimeType(const std::string& path) {
     return "text/plain";
 }
 
-#ifdef WIN32
-void handleClient(SOCKET clientSocket) {
-#else
-void handleClient(int clientSocket) {
-#endif
+void handleClient(mpax_socket clientSocket) {
+    bool showVersionTag = false;
+    bool inMaintenance = false;
+
+    std::ifstream config("config.txt");
+    if (config) {
+        std::string line;
+        while (std::getline(config, line)) {
+            if (line.find("showVersionTag = true") != std::string::npos) {
+                showVersionTag = true;
+            }
+
+            if (line.find("inMaintenance = true") != std::string::npos) {
+                inMaintenance = true;
+            }
+        }
+        config.close();
+    }
+
     char recvBuffer[4096] = {0};
+
+    #ifdef _WIN32
+    DWORD timeout = 10000;
+    setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+    #else
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+    setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    #endif
+
     int recvLen = recv(clientSocket, recvBuffer, sizeof(recvBuffer) - 1, 0);
     if (recvLen <= 0) {
         #ifdef _WIN32
-        std::cerr << "Connection closed: " << WSAGetLastError() << "\n";
-        closesocket(clientSocket);
+        int err = mpax_error();
+        if (err == WSAETIMEDOUT) {
+            std::cerr << "\033[31m[408] Request Timeout\033[0m\n";
+            send_response_page(clientSocket, 408);
+        } else {
+            std::cerr << "Connection closed: " << err << "\n";
+        }
+        mpax_closesocket(clientSocket);
         #else
-        std::cerr << "Connection closed: " << errno << "\n";
+        if (errno == EWOULDBLOCK || errno == EAGAIN) {
+            std::cerr << "\033[31m[408] Request Timeout\033[0m\n";
+            send_response_page(clientSocket, 408);
+        } else {
+            std::cerr << "Connection closed: " << errno << "\n";
+        }
+        mpax_closesocket(clientSocket);
         #endif
         
         return;
@@ -185,7 +206,7 @@ void handleClient(int clientSocket) {
     }
 
     if (method != "GET" && method != "HEAD") {
-        send_response_page(clientSocket, 400);
+        send_response_page(clientSocket, 405);
         return;
     }
 
@@ -197,17 +218,33 @@ void handleClient(int clientSocket) {
     std::string req_path = request.substr(start + 1, end - start - 1);
 
     if (start != std::string::npos && end != std::string::npos) {
-        std::cout << "[200] OK: " << req_path << "\n";
-
         if (req_path.length() > 3072) {
-            std::cout << "[414] URI Too Long: " << req_path << "\n";
+            std::cout << "\033[31m[414] URI Too Long: " << req_path << "\033[0m\n";
             send_response_page(clientSocket, 414);
             return;
         }
 
-        if (req_path.find("%") != std::string::npos) {
-            std::cout << "[400] Bad Request: " << req_path << "\n";
-            send_response_page(clientSocket, 400);
+        size_t percent_pos = req_path.find('%');
+        if (percent_pos != std::string::npos) {
+            if (percent_pos + 2 >= req_path.length()) {
+                std::cout << "\033[31m[400] Bad Request: " << req_path << "\033[0m\n";
+                send_response_page(clientSocket, 400);
+                return;
+            }
+
+            char hex1 = req_path[percent_pos + 1];
+            char hex2 = req_path[percent_pos + 2];
+
+            if (!std::isxdigit(hex1) || !std::isxdigit(hex2)) {
+                std::cout << "\033[31m[400] Bad Request: " << req_path << "\033[0m\n";
+                send_response_page(clientSocket, 400);
+                return;
+            }
+        }
+
+        if (inMaintenance) {
+            std::cout << "\033[31m[503] Service Unavailable: " << req_path << "\033[0m\n";
+            send_response_page(clientSocket, 503);
             return;
         }
 
@@ -215,7 +252,7 @@ void handleClient(int clientSocket) {
         // this will be used in the event that this web server is proxying the Apache HTTP Server (still being worked on)
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (req_path == "/.htaccess") {
-            std::cout << "[403] Forbidden: " << req_path << "\n";
+            std::cout << "\033[31m[403] Forbidden: " << req_path << "\033[0m\n";
             send_response_page(clientSocket, 403);
             return;
         }
@@ -240,12 +277,18 @@ void handleClient(int clientSocket) {
                 }
                 
                 if (addrPtr && inet_ntop(clientAddr.ss_family, addrPtr, ipStr, sizeof(ipStr))) {
-                    std::cout << "[494] Path Traversal attack blocked: IP " << ipStr << " tried to do " << req_path << "\n";
+                    std::cout << "\033[31m[494] Path Traversal attack blocked: IP " << ipStr << " tried to do " << req_path << "\033[0m\n";
                 }
             } else {
-                std::cout << "[494] Path Traversal attack blocked: " << req_path << "\n";
+                std::cout << "\033[31m[494] Path Traversal attack blocked: " << req_path << "\033[0m\n";
             }
             send_response_page(clientSocket, 494);
+            return;
+        }
+
+        if (req_path.empty() || req_path[0] != '/') {
+            std::cout << "\033[31m[501] Method Not Implemented: " << req_path << "\033[0m\n";
+            send_response_page(clientSocket, 501);
             return;
         }
 
@@ -254,19 +297,23 @@ void handleClient(int clientSocket) {
         } else if (req_path.find("..") == std::string::npos) {
             path = base_dir + req_path.substr(1);
         } else {
+            std::cout << "\033[31m[400] Bad Request: " << req_path << "\033[0m\n";
             send_response_page(clientSocket, 400);
             return;
         }
     } else {
+        std::cout << "\033[31m[400] Bad Request: " << req_path << "\033[0m\n";
         send_response_page(clientSocket, 400);
         return;
     }
 
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "[404] Not Found: " << req_path << "\n";
+        std::cout << "\033[31m[404] Not Found: " << req_path << "\033[0m\n";
         send_response_page(clientSocket, 404);
         return;
+    } else {
+        std::cout << "\033[32m[200] OK: " << req_path << "\033[0m\n";
     }
 
     std::stringstream bodyStream;
@@ -275,9 +322,29 @@ void handleClient(int clientSocket) {
 
     std::string mimeType = getMimeType(path);
 
+    std::string serverHeader;
+
+    if (showVersionTag) {
+        #ifdef BUILD
+        #ifdef _WIN32
+        serverHeader = "mpax235 WS/build " + std::to_string(buildVersion) + " (Windows)";
+        #else
+        serverHeader = "mpax235 WS/" + std::to_string(buildVersion) + " (Linux)";
+        #endif
+        #else
+        #ifdef _WIN32
+        serverHeader = "mpax235 WS/" + releaseVersion + " (Windows)";
+        #else
+        serverHeader = "mpax235 WS/" + releaseVersion + " (Linux)";
+        #endif
+        #endif
+    } else {
+        serverHeader = "mpax235 WS";
+    }
+
     std::string response =
         "HTTP/1.1 200 OK\r\n"
-        "Server: mpax235 WS\r\n"
+        "Server: " + serverHeader + "\r\n"
         "Content-Type: " + mimeType + "\r\n"
         "Content-Length: " + std::to_string(body.size()) + "\r\n"
         "Connection: close\r\n\r\n";
@@ -286,7 +353,7 @@ void handleClient(int clientSocket) {
         try {
             response += body;
         } catch (const std::exception& ex) {
-            std::cout << "[500] Internal Server Error: " << ex.what() << "\n";
+            std::cout << "\033[31m[500] Internal Server Error: " << ex.what() << "\033[0m\n";
             send_response_page(clientSocket, 500);
             return;
         }
@@ -296,22 +363,17 @@ void handleClient(int clientSocket) {
     while (totalSent < response.size()) {
         int sent = send(clientSocket, response.c_str() + totalSent,
                         static_cast<int>(response.size() - totalSent), 0);
-        #ifdef _WIN32
-        if (sent == SOCKET_ERROR) break;
-        #else
-        if (sent == -1) break;
-        #endif
+        if (sent == mpax_socketerror) break;
         totalSent += sent;
     }
 
+    shutdown(clientSocket, mpax_send);
     #ifdef _WIN32
-    shutdown(clientSocket, SD_SEND);
     Sleep(200);
-    closesocket(clientSocket);
     #else
-    shutdown(clientSocket, SHUT_WR);
-    close(clientSocket);
+    usleep(200000);
     #endif
+    mpax_closesocket(clientSocket);
 }
 
 int main(int argc, char *argv[]) {
@@ -330,9 +392,9 @@ int main(int argc, char *argv[]) {
 
     #ifdef _WIN32
     WSADATA wsaData;
-    SOCKET serverSocket;
+    mpax_socket serverSocket;
     #else
-    int serverSocket;
+    mpax_socket serverSocket;
     #endif
     sockaddr_in serverAddr{}, clientAddr{};
     #ifdef _WIN32
@@ -356,18 +418,18 @@ int main(int argc, char *argv[]) {
 
     #ifdef _WIN32
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "Unfortunately, the Windows Socket API failed to load :(\n";
+        std::cerr << "\033[31mUnfortunately, the Windows Socket API failed to load :(\033[0m\n";
         return 1;
     }
     serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (serverSocket == INVALID_SOCKET) {
-        std::cerr << "Unfortunately, the socket() function failed :( | " << WSAGetLastError() << "\n";
+    if (serverSocket == mpax_invalidsocket) {
+        std::cerr << "\033[31mUnfortunately, the socket() function failed :( | " << WSAGetLastError() << "\033[0m\n";
         return 1;
     }
     #else
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1) {
-        std::cerr << "Unfortunately, the socket() function failed :( | " << errno << "\n";
+    if (serverSocket == mpax_invalidsocket) {
+        std::cerr << "\033[31mUnfortunately, the socket() function failed :( | " << errno << "\033[0m\n";
         return 1;
     }
     #endif
@@ -375,15 +437,25 @@ int main(int argc, char *argv[]) {
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
 
+    std::cout << "\033[34m=======================================\n";
+    std::cout << "The mpax235 Web Server\n";
+    #ifdef BUILD
+    std::cout << "Build " << std::to_string(buildVersion) << "\n";
+    #else
+    std::cout << "Version " << releaseVersion << "\n";
+    #endif
+    std::cout << "2024-2025 mpax235\n";
+    std::cout << "=======================================\033[0m\n";
+
     if (nonLocal) {
         #ifdef _WIN32
         char hostname[256];
-        if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {
-            std::cerr << "Unfortunately, the gethostname() function failed :(\n";
+        if (gethostname(hostname, sizeof(hostname)) == mpax_socketerror) {
+            std::cerr << "\033[31mUnfortunately, the gethostname() function failed :(\033[0m\n";
             return 1;
         }
         if (gethostname(hostname, sizeof(hostname)) == -1) {
-            std::cerr << "Unfortunately, the gethostname() function failed :(\n";
+            std::cerr << "\033[31mUnfortunately, the gethostname() function failed :(\033[0m\n";
             return 1;
         }
 
@@ -393,7 +465,7 @@ int main(int argc, char *argv[]) {
         hints.ai_protocol = IPPROTO_TCP;
 
         if (getaddrinfo(hostname, nullptr, &hints, &info) != 0) {
-            std::cerr << "Unfortunately, the getaddrinfo() function failed :(\n";
+            std::cerr << "\033[31mUnfortunately, the getaddrinfo() function failed :(\033[0m\n";
             return 1;
         }
 
@@ -402,7 +474,7 @@ int main(int argc, char *argv[]) {
 
         char ipStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &serverAddr.sin_addr, ipStr, sizeof(ipStr));
-        std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":" << port << "\n";
+        std::cout << "Listening on http://" << ipStr << ":" << port << "\n";
 
         freeaddrinfo(info);
         #else
@@ -420,7 +492,7 @@ int main(int argc, char *argv[]) {
 
                 char ipStr[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, &serverAddr.sin_addr, ipStr, sizeof(ipStr));
-                std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":" << port << "\n";
+                std::cout << "Listening on http://" << ipStr << ":" << port << "\n";
                 found = true;
                 break;
             }
@@ -429,30 +501,30 @@ int main(int argc, char *argv[]) {
         freeifaddrs(ifaddr);
 
         if (!found) {
-            std::cerr << "Unfortunately, a non-loopback IPv4 address was not found :(\n";
+            std::cerr << "\033[31mUnfortunately, a non-loopback IPv4 address was not found :(\033[0m\n";
             return 1;
         }
         #endif
     } else {
         inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-        std::cout << "The mpax235 Web Server is running at http://localhost:" << port << "\n";
+        std::cout << "Listening on http://localhost:" << port << "\n";
     }
 
     #ifdef _WIN32
-    if (bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-        std::cerr << "Unfortunately, the bind() function failed :( | " << WSAGetLastError() << "\n";
+    if (bind(serverSocket, (mpax_socketaddr*)&serverAddr, sizeof(serverAddr)) == mpax_socketerror) {
+        std::cerr << "\033[31mUnfortunately, the bind() function failed :( | " << mpax_error() << "\033[0m\n";
         return 1;
     }
 
-    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
-        std::cerr << "Unfortunately, the listen() function failed :( | " << WSAGetLastError() << "\n";
+    if (listen(serverSocket, SOMAXCONN) == mpax_socketerror) {
+        std::cerr << "\033[31mUnfortunately, the listen() function failed :( | " << mpax_error() << "\033[0m\n";
         return 1;
     }
 
     while (true) {
-        SOCKET clientSocket = accept(serverSocket, (SOCKADDR*)&clientAddr, &clientSize);
-        if (clientSocket == INVALID_SOCKET) {
-            std::cerr << "Unfortunately, the accept() function failed :( | " << WSAGetLastError() << "\n";
+        mpax_socket clientSocket = accept(serverSocket, (mpax_socketaddr*)&clientAddr, &clientSize);
+        if (clientSocket == mpax_invalidsocket) {
+            std::cerr << "\033[31mUnfortunately, the accept() function failed :( | " << mpax_error() << "\033[0m\n";
             continue;
         }
 
@@ -462,24 +534,24 @@ int main(int argc, char *argv[]) {
     #else
     int opt = 1;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-        std::cerr << "Unfortunately, the setsocketopt() function failed :( | " << errno << "\n";
+        std::cerr << "\033[31mUnfortunately, the setsocketopt() function failed :( | " << errno << "\033[0m\n";
         return 1; 
     }
 
-    if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-        std::cerr << "Unfortunately, the bind() function failed :( | " << errno << "\n";
+    if (bind(serverSocket, (mpax_socketaddr*)&serverAddr, sizeof(serverAddr)) == mpax_socketerror) {
+        std::cerr << "\033[31mUnfortunately, the bind() function failed :( | " << mpax_error() << "\033[0m\n";
         return 1;
     }
 
-    if (listen(serverSocket, SOMAXCONN) == -1) {
-        std::cerr << "Unfortunately, the listen() function failed :( | " << errno << "\n";
+    if (listen(serverSocket, SOMAXCONN) == mpax_socketerror) {
+        std::cerr << "\033[31mUnfortunately, the listen() function failed :( | " << mpax_error() << "\033[0m\n";
         return 1;
     }
 
     while (true) {
-        int clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &clientSize);
-        if (clientSocket == -1) {
-            std::cerr << "Unfortunately, the accept() function failed :( | " << errno << "\n";
+        mpax_socket clientSocket = accept(serverSocket, (mpax_socketaddr*)&clientAddr, &clientSize);
+        if (clientSocket == mpax_invalidsocket) {
+            std::cerr << "\033[31mUnfortunately, the accept() function failed :( | " << mpax_error() << "\033[0m\n";
             continue;
         }
 
@@ -488,11 +560,9 @@ int main(int argc, char *argv[]) {
     }
     #endif
     
+    mpax_closesocket(serverSocket);
     #ifdef _WIN32
-    closesocket(serverSocket);
     WSACleanup();
-    #else
-    close(serverSocket);
     #endif
 
     return 0;

@@ -22,11 +22,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "../../socket/include/mpax_socket.h"
+#ifdef _WIN32
+#include <WinSock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#else
+#include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#endif
 
-#ifndef HTTP_RESPONSE_H
-#define HTTP_RESPONSE_H
+#ifdef _WIN32
+#pragma comment(lib, "Ws2_32.lib")
+#endif
 
-void send_response_page(mpax_socket clientSocket, int errorCode);
+#ifndef MPAX_SOCKET_H
+#define MPAX_SOCKET_H
 
-#endif // HTTP_RESPONSE_H
+#ifdef _WIN32
+typedef SOCKET              mpax_socket;
+
+#define mpax_socketerror    SOCKET_ERROR
+#define mpax_send           SD_SEND
+#define mpax_socketaddr     SOCKADDR
+#define mpax_invalidsocket  INVALID_SOCKET
+#else
+typedef int                 mpax_socket;
+
+#define mpax_socketerror    -1
+#define mpax_send           SHUT_WR
+#define mpax_socketaddr     sockaddr
+#define mpax_invalidsocket  -1
+#endif
+
+int mpax_error(void);
+int mpax_closesocket(int socket);
+
+#endif // MPAX_SOCKET_H

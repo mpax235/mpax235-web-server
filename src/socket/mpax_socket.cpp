@@ -22,11 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "../../socket/include/mpax_socket.h"
+#include "include/mpax_socket.h"
 
-#ifndef HTTP_RESPONSE_H
-#define HTTP_RESPONSE_H
+int mpax_error(void) {
+    #ifdef _WIN32
+    return WSAGetLastError();
+    #else
+    return errno;
+    #endif
+}
 
-void send_response_page(mpax_socket clientSocket, int errorCode);
-
-#endif // HTTP_RESPONSE_H
+int mpax_closesocket(int socket) {
+    #ifdef _WIN32
+    return closesocket(socket);
+    #else
+    return close(socket);
+    #endif
+}

@@ -22,11 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "../../socket/include/mpax_socket.h"
+#include <string>
 
-#ifndef HTTP_RESPONSE_H
-#define HTTP_RESPONSE_H
-
-void send_response_page(mpax_socket clientSocket, int errorCode);
-
-#endif // HTTP_RESPONSE_H
+int buildVersion = 17;
+std::string releaseVersion = "0.0.0";

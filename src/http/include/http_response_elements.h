@@ -733,7 +733,7 @@ static char mpax235_501_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>501 Not Implementedr</title>\n"
+"        <title>501 Not Implemented</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"

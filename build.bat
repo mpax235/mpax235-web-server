@@ -33,7 +33,7 @@ if "%1"=="clean" goto clean
 
 echo Building...
 if not exist build mkdir build
-cl src/*.cpp src/http/*.cpp
+cl src/*.cpp src/http/*.cpp src/info/*.cpp src/socket/*.cpp
 move /y *.obj build\
 color 7
 goto :eof

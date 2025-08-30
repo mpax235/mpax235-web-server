@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "../socket/include/mpax_socket.h"
 #include "include/http_response.h"
 #include "include/http_codes.h"
 #include "include/http_response_elements.h"
@@ -29,15 +30,7 @@ SOFTWARE.
 #include <fstream>
 #include <sstream>
 
-#ifdef _WIN32
-#pragma comment(lib, "Ws2_32.lib")
-#endif
-
-#ifdef _WIN32
-void send_response_page(SOCKET clientSocket, int httpCode) {
-#else
-void send_response_page(int clientSocket, int httpCode) {
-#endif
+void send_response_page(mpax_socket clientSocket, int httpCode) {
     const char* responseBody = nullptr;
     const char* status = nullptr;
     bool footerEnabled = true;
@@ -109,9 +102,8 @@ void send_response_page(int clientSocket, int httpCode) {
             break;
         case 404:
             if (error404PagePath != "default") {
-                std::string hostFiles = "host_files/";
-                error404PagePath = hostFiles + error404PagePath;
-                std::ifstream custom404(error404PagePath);
+                std::string fullPath = "host_files/" + error404PagePath;
+                std::ifstream custom404(fullPath);
                 if (custom404) {
                     std::stringstream buffer;
                     buffer << custom404.rdbuf();
@@ -120,7 +112,7 @@ void send_response_page(int clientSocket, int httpCode) {
                     footerEnabled = false;
                     custom404.close();
                 } else {
-                    std::cerr << "The custom 404 page cannot be found :( | " << error404PagePath << " | Using fallback page." << "\n";
+                    std::cerr << "\033[31mThe custom 404 page cannot be found :( | " << fullPath << " | Using fallback page." << "\033[0m\n";
                     responseBody = mpax235_404_page;
                 }
             } else {
@@ -247,38 +239,18 @@ void send_response_page(int clientSocket, int httpCode) {
 
     while (totalSent < toSend) {
         int sent = send(clientSocket, data + totalSent, toSend - totalSent, 0);
-        #ifdef _WIN32
-        if (sent == SOCKET_ERROR) {
-            std::cerr << "Unfortunately, the sending failed :( | " << WSAGetLastError() << "\n";
+        if (sent == mpax_socketerror) {
+            std::cerr << "\033[31mUnfortunately, the sending failed :( | " << mpax_error() << "\033[0m\n";
             break;
         }
-        #else
-        if (sent == -1) {
-            std::cerr << "Unfortunately, the sending failed :( | " << errno << "\n";
-            break;
-        }
-        #endif
         totalSent += sent;
     }
 
-    int sent = send(clientSocket, response.c_str(), (int)response.length(), 0);
+    shutdown(clientSocket, mpax_send);
     #ifdef _WIN32
-    if (sent == SOCKET_ERROR) {
-        std::cerr << "Unfortunately, the send() function failed :( | " << WSAGetLastError() << "\n";
-    }
-    #else
-    if (sent == -1) {
-        std::cerr << "Unfortunately, the send() function failed :( | " << errno << "\n";
-    }
-    #endif
-
-    #ifdef _WIN32
-    shutdown(clientSocket, SD_SEND);
     Sleep(200);
-    closesocket(clientSocket);
     #else
-    shutdown(clientSocket, SHUT_WR);
     usleep(200000);
-    close(clientSocket);
     #endif
+    mpax_closesocket(clientSocket);
 }
