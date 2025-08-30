@@ -22,8 +22,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <errno.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -32,7 +46,9 @@ SOFTWARE.
 
 #include "http/include/http_response.h"
 
+#ifdef _WIN32
 #pragma comment(lib, "Ws2_32.lib")
+#endif
 
 bool endsWith(const std::string& str, const std::string& suffix) {
     return str.size() >= suffix.size() &&
@@ -137,12 +153,21 @@ std::string getMimeType(const std::string& path) {
     return "text/plain";
 }
 
+#ifdef WIN32
 void handleClient(SOCKET clientSocket) {
+#else
+void handleClient(int clientSocket) {
+#endif
     char recvBuffer[4096] = {0};
     int recvLen = recv(clientSocket, recvBuffer, sizeof(recvBuffer) - 1, 0);
     if (recvLen <= 0) {
+        #ifdef _WIN32
         std::cerr << "Connection closed: " << WSAGetLastError() << "\n";
         closesocket(clientSocket);
+        #else
+        std::cerr << "Connection closed: " << errno << "\n";
+        #endif
+        
         return;
     }
     recvBuffer[recvLen] = '\0';
@@ -169,10 +194,16 @@ void handleClient(SOCKET clientSocket) {
     std::string base_dir = "host_files/";
     size_t start = request.find(' ');
     size_t end = request.find(" HTTP/", start + 1);
+    std::string req_path = request.substr(start + 1, end - start - 1);
 
     if (start != std::string::npos && end != std::string::npos) {
-        std::string req_path = request.substr(start + 1, end - start - 1);
         std::cout << "[200] OK: " << req_path << "\n";
+
+        if (req_path.length() > 3072) {
+            std::cout << "[414] URI Too Long: " << req_path << "\n";
+            send_response_page(clientSocket, 414);
+            return;
+        }
 
         if (req_path.find("%") != std::string::npos) {
             std::cout << "[400] Bad Request: " << req_path << "\n";
@@ -180,9 +211,23 @@ void handleClient(SOCKET clientSocket) {
             return;
         }
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // this will be used in the event that this web server is proxying the Apache HTTP Server (still being worked on)
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if (req_path == "/.htaccess") {
+            std::cout << "[403] Forbidden: " << req_path << "\n";
+            send_response_page(clientSocket, 403);
+            return;
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////
+
         if (req_path.find("..") != std::string::npos) {
             sockaddr_storage clientAddr;
+            #ifdef _WIN32
             int addrLen = sizeof(clientAddr);
+            #else
+            socklen_t addrLen = sizeof(clientAddr);
+            #endif
             char ipStr[INET6_ADDRSTRLEN] = {0};
 
             if (getpeername(clientSocket, (sockaddr*)&clientAddr, &addrLen) == 0) {
@@ -195,12 +240,12 @@ void handleClient(SOCKET clientSocket) {
                 }
                 
                 if (addrPtr && inet_ntop(clientAddr.ss_family, addrPtr, ipStr, sizeof(ipStr))) {
-                    std::cout << "[498] Path Traversal attack blocked: IP " << ipStr << " tried to do " << req_path << "\n";
+                    std::cout << "[494] Path Traversal attack blocked: IP " << ipStr << " tried to do " << req_path << "\n";
                 }
             } else {
-                std::cout << "[498] Path Traversal attack blocked: " << req_path << "\n";
+                std::cout << "[494] Path Traversal attack blocked: " << req_path << "\n";
             }
-            send_response_page(clientSocket, 498);
+            send_response_page(clientSocket, 494);
             return;
         }
 
@@ -219,7 +264,7 @@ void handleClient(SOCKET clientSocket) {
 
     std::ifstream file(path, std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "[404] Not Found: " << path << "\n";
+        std::cout << "[404] Not Found: " << req_path << "\n";
         send_response_page(clientSocket, 404);
         return;
     }
@@ -232,26 +277,41 @@ void handleClient(SOCKET clientSocket) {
 
     std::string response =
         "HTTP/1.1 200 OK\r\n"
-        "Server: mpax235\r\n"
+        "Server: mpax235 WS\r\n"
         "Content-Type: " + mimeType + "\r\n"
         "Content-Length: " + std::to_string(body.size()) + "\r\n"
         "Connection: close\r\n\r\n";
 
     if (!isHeadRequest) {
-        response += body;
+        try {
+            response += body;
+        } catch (const std::exception& ex) {
+            std::cout << "[500] Internal Server Error: " << ex.what() << "\n";
+            send_response_page(clientSocket, 500);
+            return;
+        }
     }
 
     size_t totalSent = 0;
     while (totalSent < response.size()) {
         int sent = send(clientSocket, response.c_str() + totalSent,
                         static_cast<int>(response.size() - totalSent), 0);
+        #ifdef _WIN32
         if (sent == SOCKET_ERROR) break;
+        #else
+        if (sent == -1) break;
+        #endif
         totalSent += sent;
     }
 
+    #ifdef _WIN32
     shutdown(clientSocket, SD_SEND);
     Sleep(200);
     closesocket(clientSocket);
+    #else
+    shutdown(clientSocket, SHUT_WR);
+    close(clientSocket);
+    #endif
 }
 
 int main(int argc, char *argv[]) {
@@ -268,10 +328,18 @@ int main(int argc, char *argv[]) {
     }
     */
 
+    #ifdef _WIN32
     WSADATA wsaData;
     SOCKET serverSocket;
+    #else
+    int serverSocket;
+    #endif
     sockaddr_in serverAddr{}, clientAddr{};
+    #ifdef _WIN32
     int clientSize = sizeof(clientAddr);
+    #else
+    socklen_t clientSize = sizeof(clientAddr);
+    #endif
 
     bool nonLocal = false;
 
@@ -286,6 +354,7 @@ int main(int argc, char *argv[]) {
         config.close();
     }
 
+    #ifdef _WIN32
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         std::cerr << "Unfortunately, the Windows Socket API failed to load :(\n";
         return 1;
@@ -295,13 +364,25 @@ int main(int argc, char *argv[]) {
         std::cerr << "Unfortunately, the socket() function failed :( | " << WSAGetLastError() << "\n";
         return 1;
     }
+    #else
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket == -1) {
+        std::cerr << "Unfortunately, the socket() function failed :( | " << errno << "\n";
+        return 1;
+    }
+    #endif
 
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
 
     if (nonLocal) {
+        #ifdef _WIN32
         char hostname[256];
         if (gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR) {
+            std::cerr << "Unfortunately, the gethostname() function failed :(\n";
+            return 1;
+        }
+        if (gethostname(hostname, sizeof(hostname)) == -1) {
             std::cerr << "Unfortunately, the gethostname() function failed :(\n";
             return 1;
         }
@@ -324,11 +405,40 @@ int main(int argc, char *argv[]) {
         std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":" << port << "\n";
 
         freeaddrinfo(info);
+        #else
+        struct ifaddrs *ifaddr;
+        if (getifaddrs(&ifaddr) == -1) {
+            std::cerr << "Unfortunately, the getifaddrs() function failed :(\n";
+            return 1;
+        }
+
+        bool found = false;
+        for (struct ifaddrs *ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+            if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET && !(ifa->ifa_flags & IFF_LOOPBACK)) {
+                sockaddr_in* sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_addr);
+                serverAddr.sin_addr = sa->sin_addr;
+
+                char ipStr[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &serverAddr.sin_addr, ipStr, sizeof(ipStr));
+                std::cout << "The mpax235 Web Server is running at http://" << ipStr << ":" << port << "\n";
+                found = true;
+                break;
+            }
+        }
+
+        freeifaddrs(ifaddr);
+
+        if (!found) {
+            std::cerr << "Unfortunately, a non-loopback IPv4 address was not found :(\n";
+            return 1;
+        }
+        #endif
     } else {
         inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
         std::cout << "The mpax235 Web Server is running at http://localhost:" << port << "\n";
     }
 
+    #ifdef _WIN32
     if (bind(serverSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
         std::cerr << "Unfortunately, the bind() function failed :( | " << WSAGetLastError() << "\n";
         return 1;
@@ -349,8 +459,41 @@ int main(int argc, char *argv[]) {
         std::thread clientThread(handleClient, clientSocket);
         clientThread.detach();
     }
+    #else
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+        std::cerr << "Unfortunately, the setsocketopt() function failed :( | " << errno << "\n";
+        return 1; 
+    }
 
+    if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+        std::cerr << "Unfortunately, the bind() function failed :( | " << errno << "\n";
+        return 1;
+    }
+
+    if (listen(serverSocket, SOMAXCONN) == -1) {
+        std::cerr << "Unfortunately, the listen() function failed :( | " << errno << "\n";
+        return 1;
+    }
+
+    while (true) {
+        int clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &clientSize);
+        if (clientSocket == -1) {
+            std::cerr << "Unfortunately, the accept() function failed :( | " << errno << "\n";
+            continue;
+        }
+
+        std::thread clientThread(handleClient, clientSocket);
+        clientThread.detach();
+    }
+    #endif
+    
+    #ifdef _WIN32
     closesocket(serverSocket);
     WSACleanup();
+    #else
+    close(serverSocket);
+    #endif
+
     return 0;
 }

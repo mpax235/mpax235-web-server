@@ -28,9 +28,16 @@ SOFTWARE.
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#pragma comment(lib, "Ws2_32.lib")
 
+#ifdef _WIN32
+#pragma comment(lib, "Ws2_32.lib")
+#endif
+
+#ifdef _WIN32
 void send_response_page(SOCKET clientSocket, int httpCode) {
+#else
+void send_response_page(int clientSocket, int httpCode) {
+#endif
     const char* responseBody = nullptr;
     const char* status = nullptr;
     bool footerEnabled = true;
@@ -178,22 +185,6 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
             responseBody = mpax235_494_page;
             status = MPAX235_494;
             break;
-        case 495:
-            responseBody = mpax235_495_page;
-            status = MPAX235_495;
-            break;
-        case 496:
-            responseBody = mpax235_496_page;
-            status = MPAX235_496;
-            break;
-        case 497:
-            responseBody = mpax235_497_page;
-            status = MPAX235_497;
-            break;
-        case 498:
-            responseBody = mpax235_498_page;
-            status = MPAX235_498;
-            break;
         case 500:
             responseBody = mpax235_500_page;
             status = MPAX235_500;
@@ -244,7 +235,7 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
 
     std::string response =
         "HTTP/1.1 " + std::string(status) + "\r\n" +
-        "Server: mpax235\r\n" +
+        "Server: mpax235 WS\r\n" +
         "Content-Type: text/html\r\n" +
         "Content-Length: " + std::to_string(fullBody.length() + paddingComments.length()) + "\r\n" +
         "Connection: close\r\n\r\n" +
@@ -256,19 +247,38 @@ void send_response_page(SOCKET clientSocket, int httpCode) {
 
     while (totalSent < toSend) {
         int sent = send(clientSocket, data + totalSent, toSend - totalSent, 0);
+        #ifdef _WIN32
         if (sent == SOCKET_ERROR) {
             std::cerr << "Unfortunately, the sending failed :( | " << WSAGetLastError() << "\n";
             break;
         }
+        #else
+        if (sent == -1) {
+            std::cerr << "Unfortunately, the sending failed :( | " << errno << "\n";
+            break;
+        }
+        #endif
         totalSent += sent;
     }
 
     int sent = send(clientSocket, response.c_str(), (int)response.length(), 0);
+    #ifdef _WIN32
     if (sent == SOCKET_ERROR) {
         std::cerr << "Unfortunately, the send() function failed :( | " << WSAGetLastError() << "\n";
     }
+    #else
+    if (sent == -1) {
+        std::cerr << "Unfortunately, the send() function failed :( | " << errno << "\n";
+    }
+    #endif
 
+    #ifdef _WIN32
     shutdown(clientSocket, SD_SEND);
     Sleep(200);
     closesocket(clientSocket);
+    #else
+    shutdown(clientSocket, SHUT_WR);
+    usleep(200000);
+    close(clientSocket);
+    #endif
 }

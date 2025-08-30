@@ -27,7 +27,7 @@ SOFTWARE.
 #ifndef SERVER_INFO_H
 #define SERVER_INFO_H
 
-int buildVersion = 15;
+int buildVersion = 16;
 std::string releaseVersion = "0.0.0";
 
 #endif // SERVER_INFO_H

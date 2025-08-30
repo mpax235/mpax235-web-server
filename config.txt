@@ -11,7 +11,7 @@
 #####################################
 
 # This one configures if your machine should host to your entire Wi-Fi or it should only be accessible to your machine.
-# "false" will only broadcast the server on localhost:<Port> while "true" will broadcast the server on <iPv4 Address>:<Port>.
+# "false" will only broadcast the server on localhost:<Port> while "true" will broadcast the server on <iPv4 / iPv6 Address>:<Port>.
 nonLocal = false
 
 #####################################
@@ -21,7 +21,7 @@ nonLocal = false
 #####################################
 
 # This one configures if the mpax235 Web Server version tag should appear on the HTTP error pages.
-# "false" will only show "mpax235" while true will show "mpax235 / <version>".
+# "false" will only show "mpax235 WS" while true will show "mpax235 WS/<version>".
 # It is recommended to set this to false for production use.
 showVersionTag = true
 

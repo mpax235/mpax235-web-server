@@ -22,11 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef _WIN32
 #include <WinSock2.h>
+#else
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
 
 #ifndef HTTP_RESPONSE_H
 #define HTTP_RESPONSE_H
 
+#ifdef _WIN32
 void send_response_page(SOCKET clientSocket, int errorCode);
+#else
+void send_response_page(int clientSocket, int errorCode);
+#endif
 
 #endif // HTTP_RESPONSE_H

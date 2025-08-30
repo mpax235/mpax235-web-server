@@ -200,7 +200,7 @@ static char mpax235_401_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>401 Authorization Required</title>\n"
+"        <title>401 Unauthorized</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -222,7 +222,7 @@ static char mpax235_401_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>401 Authorization Required</h1><center>\n";
+"        <center><h1>401 Unauthorized</h1><center>\n";
 
 static char mpax235_402_page[] =
 "<!DOCTYPE html>\n"
@@ -312,7 +312,7 @@ static char mpax235_405_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>405 Not Allowed</title>\n"
+"        <title>405 Method Not Allowed</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -334,7 +334,7 @@ static char mpax235_405_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>405 Not Allowed</h1><center>\n";
+"        <center><h1>405 Method Not Allowed</h1><center>\n";
 
 static char mpax235_406_page[] =
 "<!DOCTYPE html>\n"
@@ -368,7 +368,7 @@ static char mpax235_408_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>408 Request Time-out</title>\n"
+"        <title>408 Request Timeout</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -390,7 +390,7 @@ static char mpax235_408_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>408 Request Time-out</h1><center>\n";
+"        <center><h1>408 Request Timeout</h1><center>\n";
 
 static char mpax235_409_page[] =
 "<!DOCTYPE html>\n"
@@ -508,7 +508,7 @@ static char mpax235_413_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>413 Request Entity Too Large</title>\n"
+"        <title>413 Content Too Large</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -530,13 +530,13 @@ static char mpax235_413_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>413 Request Entity Too Large</h1><center>\n";
+"        <center><h1>413 Content Too Large</h1><center>\n";
 
 static char mpax235_414_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>414 Request-URI Too Large</title>\n"
+"        <title>414 URI Too Long</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -558,7 +558,7 @@ static char mpax235_414_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>414 Request-URI Too Large</h1><center>\n";
+"        <center><h1>414 URI Too Long</h1><center>\n";
 
 static char mpax235_415_page[] =
 "<!DOCTYPE html>\n"
@@ -592,7 +592,7 @@ static char mpax235_416_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>416 Request Range Not Satisfiable</title>\n"
+"        <title>416 Range Not Satisfiable</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -614,7 +614,7 @@ static char mpax235_416_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>416 Request Range Not Satisfiable</h1><center>\n";
+"        <center><h1>416 Range Not Satisfiable</h1><center>\n";
 
 static char mpax235_421_page[] =
 "<!DOCTYPE html>\n"
@@ -673,122 +673,6 @@ static char mpax235_429_page[] =
 "        <center><h1>429 Too Many Requests</h1><center>\n";
 
 static char mpax235_494_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>400 Request Header Or Cookie Too Large</title>\n"
-"        <style>\n"
-"            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
-"\n"
-"            body {\n"
-"                background-color: black;\n"
-"                margin: 10px;\n"
-"                padding: 0;\n"
-"                color: #00ffff;\n"
-"                font-family: 'Montserrat';\n"
-"            }\n"
-"\n"
-"            h1 {\n"
-"                font-weight: normal;\n"
-"            }\n"
-"\n"
-"            hr {\n"
-"                border: 1px solid #00ffff;\n"
-"            }\n"
-"        </style>\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>400 Bad Request</h1><center>\n"
-"        <center>Request Header Or Cookie Too Large</center>\n";
-
-static char mpax235_495_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>400 Invalid SSL Certificate</title>\n"
-"        <style>\n"
-"            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
-"\n"
-"            body {\n"
-"                background-color: black;\n"
-"                margin: 10px;\n"
-"                padding: 0;\n"
-"                color: #00ffff;\n"
-"                font-family: 'Montserrat';\n"
-"            }\n"
-"\n"
-"            h1 {\n"
-"                font-weight: normal;\n"
-"            }\n"
-"\n"
-"            hr {\n"
-"                border: 1px solid #00ffff;\n"
-"            }\n"
-"        </style>\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>400 Bad Request</h1><center>\n"
-"        <center>Invalid SSL Certificate</center>\n";
-
-static char mpax235_496_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>400 No required SSL certificate was sent</title>\n"
-"        <style>\n"
-"            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
-"\n"
-"            body {\n"
-"                background-color: black;\n"
-"                margin: 10px;\n"
-"                padding: 0;\n"
-"                color: #00ffff;\n"
-"                font-family: 'Montserrat';\n"
-"            }\n"
-"\n"
-"            h1 {\n"
-"                font-weight: normal;\n"
-"            }\n"
-"\n"
-"            hr {\n"
-"                border: 1px solid #00ffff;\n"
-"            }\n"
-"        </style>\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>400 Bad Request</h1><center>\n"
-"        <center>No required SSL certificate was sent</center>\n";
-
-static char mpax235_497_page[] =
-"<!DOCTYPE html>\n"
-"<html>\n"
-"    <head>\n"
-"        <title>400 The plain HTTP request was sent to HTTPS port</title>\n"
-"        <style>\n"
-"            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
-"\n"
-"            body {\n"
-"                background-color: black;\n"
-"                margin: 10px;\n"
-"                padding: 0;\n"
-"                color: #00ffff;\n"
-"                font-family: 'Montserrat';\n"
-"            }\n"
-"\n"
-"            h1 {\n"
-"                font-weight: normal;\n"
-"            }\n"
-"\n"
-"            hr {\n"
-"                border: 1px solid #00ffff;\n"
-"            }\n"
-"        </style>\n"
-"    </head>\n"
-"    <body>\n"
-"        <center><h1>400 Bad Request</h1><center>\n"
-"        <center>The plain HTTP request was sent to HTTPS port</center>\n";
-
-static char mpax235_498_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
@@ -905,7 +789,7 @@ static char mpax235_503_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>503 Service Temporarily Unavailable</title>\n"
+"        <title>503 Service Unavailable</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -927,13 +811,13 @@ static char mpax235_503_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>503 Service Temporarily Unavailable</h1><center>\n";
+"        <center><h1>503 Service Unavailable</h1><center>\n";
 
 static char mpax235_504_page[] =
 "<!DOCTYPE html>\n"
 "<html>\n"
 "    <head>\n"
-"        <title>504 Gateway Time-out</title>\n"
+"        <title>504 Gateway Timeout</title>\n"
 "        <style>\n"
 "            @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');\n"
 "\n"
@@ -955,7 +839,7 @@ static char mpax235_504_page[] =
 "        </style>\n"
 "    </head>\n"
 "    <body>\n"
-"        <center><h1>504 Gateway Time-out</h1><center>\n";
+"        <center><h1>504 Gateway Timeout</h1><center>\n";
 
 static char mpax235_505_page[] =
 "<!DOCTYPE html>\n"
@@ -1014,19 +898,33 @@ static char mpax235_507_page[] =
 "        <center><h1>507 Insufficient Storage</h1><center>\n";
 
 #ifdef BUILD
+#ifdef _WIN32
 std::string footer = 
-    "        <hr><center><span>mpax235/build " + std::to_string(buildVersion) + "</span></center>\n"
+    "        <hr><center><span>mpax235 WS/build " + std::to_string(buildVersion) + " (Windows)</span></center>\n"
     "    </body>\n"
     "</html>\n";
 #else
 std::string footer = 
-    "        <hr><center><span>mpax235/" + releaseVersion + "</span></center>\n"
+    "        <hr><center><span>mpax235 WS/build " + std::to_string(buildVersion) + " (Linux)</span></center>\n"
     "    </body>\n"
     "</html>\n";
 #endif
+#else
+#ifdef _WIN32
+std::string footer = 
+    "        <hr><center><span>mpax235 WS/" + releaseVersion + " (Windows)</span></center>\n"
+    "    </body>\n"
+    "</html>\n";
+#else
+std::string footer = 
+    "        <hr><center><span>mpax235 WS/" + releaseVersion + " (Linux)</span></center>\n"
+    "    </body>\n"
+    "</html>\n";
+#endif
+#endif
 
 static char footerNoVersionTag[] =
-"        <hr><center><span>mpax235</span></center>\n"
+"        <hr><center><span>mpax23 WS</span></center>\n"
 "    </body>\n"
 "</html>\n";
 
