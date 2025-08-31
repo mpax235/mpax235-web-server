@@ -47,8 +47,8 @@ void send_response_page(mpax_socket clientSocket, int httpCode) {
             size_t pos = line.find("error404PagePath =");
             if (pos != std::string::npos) {
                 std::string value = line.substr(pos + 18);
-                value.erase(0, value.find_first_not_of(" \t"));
-                value.erase(value.find_last_not_of(" \t") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
 
                 if (value != "default") {
                     error404PagePath = value;

@@ -24,5 +24,5 @@ SOFTWARE.
 
 #include <string>
 
-int buildVersion = 20;
+int buildVersion = 21;
 std::string releaseVersion = "0.0.0";
